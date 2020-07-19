@@ -1,0 +1,40 @@
+{
+    "porn_model":{
+        "train_path": "/data1/wangruihao/cocofun/porn/new_train/train.txt",
+        "val_path": "/data1/wangruihao/cocofun/porn/new_train/test.txt",
+        "suffix_cla_path": "",
+        "best_model": "",
+        "best_acc_path": "",
+        "best_auc_path": "",
+        "checkpoint": "/checkpoint/porn_model",
+        "network_type": "B4",
+        "optim_type": "Adadelta",
+        "batch_size": 16,
+        "normal_axis": "[1, 5]",
+        "low_threshold": 0.2506,
+        "high_threshold": 0.6892,
+        "class_num": 11,
+        "max_frames": 20,
+        "hw_rate": 1.0,
+        "input_shape": "(380,380)"
+    },
+    "unporn_model":{
+        "train_path": "",
+        "val_path": "",
+        "suffix_cla_path": "",
+        "best_model": "",
+        "best_acc_path": "",
+        "best_auc_path": "",
+        "checkpoint": "/checkpoint/unporn_model",
+        "network_type": "B4",
+        "optim_type": "Adadelta",
+        "batch_size": 16,
+        "normal_axis": "[2]",
+        "low_threshold": 0.3,
+        "high_threshold": 0.5,
+        "class_num": 4,
+        "max_frames": 20,
+        "hw_rate": 1.0,
+        "input_shape":"(380,380)"
+    }
+}
