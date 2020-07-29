@@ -46,3 +46,10 @@ def getMapDict(class_num):
         dict[id] = name
 
     return map_dict
+
+
+def pil2bgr(self, im):
+    im.thumbnail((512, 512))
+    rgb_img = np.array(im)
+    bgr_img = cv2.cvtColor(rgb_img, cv2.COLOR_RGB2BGR)
+    return bgr_img

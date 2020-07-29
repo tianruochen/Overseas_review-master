@@ -9,7 +9,7 @@
         "checkpoint": "/checkpoint/porn_model",
         "network_type": "B4",
         "optim_type": "Adadelta",
-        "batch_size": 16,
+        "batch_size": 32,
         "normal_axis": "[1, 5]",
         "low_threshold": 0.2506,
         "high_threshold": 0.6892,

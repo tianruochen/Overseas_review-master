@@ -7,7 +7,7 @@ import json
 import collections
 
 import torch
-import  numpy as np
+import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
@@ -18,7 +18,7 @@ from sklearn.metrics import roc_auc_score
 from src.utils.util import getdata_from_dictory
 from src.utils.util import buildNetwork, getMapDict
 from src.utils.util import Averager
-from src.module.dataset import DatafromList
+from src.module.dataset import DataFactory
 
 
 os.environ["CUDA DEVICE_ORDER"] = "PCI_BUS_ID"
@@ -116,14 +116,12 @@ def train(model="porn_model"):
     val_datalist = getdata_from_dictory(path=val_path)
 
     # 根据数据列表装配数据 dataset
-    train_dataset = DatafromList(train_path, mode="train", inputsize=config["input_size"])
-    val_dataset = DatafromList(val_path, mode="val", inputsize=config["input_size"])
+    train_dataset = DataFactory(train_path, batchsize=config["batch_size"], mode="train", inputsize=config["input_size"])
+    val_dataset = DataFactory(val_path, batchsize=config["batch_size"], mode="val", inputsize=config["input_size"])
 
     # 根据dataset制作DataLoder
-    train_dataloader = DataLoader(train_dataset, batch_size=int(config["batch_size"]),
-                                  shuffle=True, num_workers=max(int(config["batch_zize"]) / 2, 2))
-    val_dataloader = DataLoader(val_dataset, batch_size=int(config["batch_size"]),
-                                shuffle=True, num_workers=max(int(config["batch_size"]) / 2, 2))
+    train_dataloader = train_dataset.getBatchData()
+    val_dataloader = val_dataset.getBatchData()
 
     # 构建网络、打印网络结构、并加载网络参数
     net = buildNetwork(network_type="B4", class_num=config["class_num"])
