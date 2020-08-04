@@ -8,6 +8,7 @@ from torchvision import transforms
 means = [0.485, 0.456, 0.406]
 stds = [0.229, 0.224, 0.225]
 
+
 class AlignCollate(object):
 
     def __init__(self, mode, imgsize):
@@ -18,7 +19,7 @@ class AlignCollate(object):
 
         if self.mode == "train":
             self.tfms = transforms.Compose([
-                transforms.Resize(int(self.imgH*1.1, self.imgW*1.1)),
+                transforms.Resize(int(self.imgH * 1.1, self.imgW * 1.1)),
                 transforms.RandomHorizontalFlip(),
                 transforms.RandomVerticalFlip(),
                 transforms.RandomCrop(self.imgH, self.imgW),
@@ -62,9 +63,9 @@ class _Dataset(Dataset):
     def __init__(self, datalist):
         images = []
         for l_append in datalist:
-            l_append.append(0.0)   #附加一个困难程度的指标
+            l_append.append(0.0)  # 附加一个困难程度的指标
             images.append(l_append)
-        #<class 'list'>: [['/data1/zhaoshiyu/porn_train_data_1018/train/sex_toy/00177701.png', '0', 0.0],
+        # <class 'list'>: [['/data1/zhaoshiyu/porn_train_data_1018/train/sex_toy/00177701.png', '0', 0.0],
         #       ['/data1/zhaoshiyu/porn_train_data_1018/train/sex_toy/sex_toy_add_000786.png', '0', 0.0]]
         self.images = images
 
@@ -77,20 +78,20 @@ class _Dataset(Dataset):
 
 class DataFactory(object):
 
-    def __init__(self, datalist, batchsize=32, mode="train", imgsize=(380, 380)) -> None:
+    def __init__(self, datalist, model_config, mode="train") -> None:
         super().__init__()
+        # batchsize = model_config["batch_size"], mode = "train", inputsize = model_config["input_size"]
         self.datalist = datalist
-        self.imgsize = imgsize
-        self.batch_data = batchsize
+        self.imgsize = model_config["input_size"]
+        self.batch_size = model_config["batch_size"]
         self.mode = mode
-        self.AlignCollate = AlignCollate(self.mode,self.imgsize)
+        self.AlignCollate = AlignCollate(self.mode, self.imgsize)
 
-
-    def getBatchData(self):
+    def get_dataloader(self):
         data_ = _Dataset(self.datalist)
-        self.batch_data = torch.utils.data.DataLoader(
+        data_loader = torch.utils.data.DataLoader(
             data_, batch_size=self.batch_data,
-            shuffle=True, num_workers=max(int(self.batch_size/4), 2),
+            shuffle=True, num_workers=max(int(self.batch_size / 4), 2),
             collate_fn=self.AlignCollate, pin_memory=False
         )
-
+        return data_loader

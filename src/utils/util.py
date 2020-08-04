@@ -1,6 +1,9 @@
 ''' Some functions to deal with data '''
 
-from src.module import models
+import numpy as np
+import cv2
+
+
 
 class Averager():
     """Compute average for torch.Tensor, used for loss average."""
@@ -31,9 +34,6 @@ def getdata_from_dictory(path=None):
                     datalist.append(line.strip().split("\t"))
     return datalist
 
-def buildNetwork(network_type="B4",class_num=11):
-    if network_type == "B4":
-        net = models.EfficientNetB4(class_num)
 
 def getMapDict(class_num):
     map_dict = {}

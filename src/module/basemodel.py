@@ -1,17 +1,17 @@
 import numpy as np
-import torch
+import torch.nn as nn
 import cv2
 from PIL import Image
 
 from src.module.networks import *
 
 
-class BaseModel(object):
+class Net(object):
 
-    def __init__(self,model_name, model_config) -> None:
+    def __init__(self,model_type, model_config) -> None:
         super().__init__()
-        self.model_name = model_name
-        self.network_type = model_config['network_type']
+        self.model_type = model_type
+        self.model_arch = model_config['model_arch']
         self.model_path = model_config['model_path']
         self.classnum = model_config['class_num']
         self.normal_axis = model_config['normal_axis']
@@ -24,9 +24,9 @@ class BaseModel(object):
         self.model = self.buildNetwork()
 
     def buildNetwork(self):
-        if self.network_type == "B4":
+        if self.model_arch == "B4":
             model = Efficietnet_b4(self.classnum)
-            self.model = torch.nn.DataParallel(model).cuda()
+            self.model = nn.DataParallel(model).cuda()
             self.model.load_state_dict(torch.load(self.model_path))
             self.model.eval()
         return model
