@@ -64,6 +64,16 @@ def get_hard_examples(model, dataloader, num_classes, device):
 
 
 def validation(model, val_dataset, num_classes, epoch, mode, device):
+    '''
+    统计验证集上的精确度与auc得分
+    :param model:
+    :param val_dataset:
+    :param num_classes:
+    :param epoch:
+    :param mode:
+    :param device:
+    :return:
+    '''
     count = 0
     eq_count = 0
     l = []
