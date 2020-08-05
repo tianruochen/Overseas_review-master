@@ -21,7 +21,7 @@ from utils.util import getdata_from_dictory
 
 from utils.util import Averager
 from utils import validation
-from module import DataFactory
+from module.dataset import DataFactory
 from module.basemodel import Net
 
 os.environ["CUDA DEVICE_ORDER"] = "PCI_BUS_ID"
