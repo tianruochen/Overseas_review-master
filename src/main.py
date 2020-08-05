@@ -30,7 +30,7 @@ warnings.filterwarnings("ignore")
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 parser = argparse.ArgumentParser(description='Overseas review project training')
-parser.add_argument('-m', '--model', default='porn', help="model type (default:porn)")
+parser.add_argument('-m', '--model', default='pron', help="model type (default:pron)")
 
 
 def train(model_type="porn"):
@@ -43,6 +43,7 @@ def train(model_type="porn"):
     model_config = json.load(open("config/model_config.json"))[model_type]
     print(model_config)
 
+    mode = "train"
     batch_size = model_config["batch_size"]
     classes_num = model_config["classes_num"]
     best_model_path = model_config["best_model"]
@@ -64,15 +65,15 @@ def train(model_type="porn"):
     val_dataloader = val_dataset.get_dataloader()
 
     # 构建网络-->打印网络结构-->加载网络参数-->将模型移入cuda
-    net = Net(model_type, model_config).getNetwork()
+    model = Net(model_type, device, model_config, mode).get_model()
     print("=" * 40 + "network architecture" + "=" * 40)
-    for layer_name, layer_params in net.named_parameters():
+    for layer_name, layer_params in model.named_parameters():
         print("name: " + layer_name + "\t" + "shape: ", layer_params.shape)
     print("=" * 100)
-    model = DataParallel(net).to(device)
+    # zmodel = DataParallel(net).to(device)
     # 加载已经训练好的最佳模型
-    if best_model_path:
-        model.load_state_dict(torch.load(best_model_path))
+    # if best_model_path:
+    #     model.load_state_dict(torch.load(best_model_path))
     model.train()
 
     # 创建优化器、学习策略、损失函数
@@ -119,16 +120,14 @@ def train(model_type="porn"):
             averager.reset()
             batch_idx += 1
             #########################
-            net.zero_grad()
+            model.zero_grad()
             batch_loss.backward()
             optimizer.step()
 
         #每一个epoch结束，在验证集上进行测试,记录在验证集上的损失，并写入日志
         model.eval()
         with torch.no_grad:
-            current_acc, l, current_auc = validation(net, epoch, int(model_config["class_num"]), val_dataloader)
-        # best_acc = val_acc if val_acc > best_acc else best_acc
-        # best_auc = val_auc if val_auc > best_auc else best_auc
+            current_acc, l, current_auc = validation(model, epoch, int(model_config["class_num"]), val_dataloader)
 
         #保存模型参数后者checkpoint
         if current_acc >= best_acc or current_auc >= best_auc:

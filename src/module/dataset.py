@@ -2,6 +2,7 @@ import torch
 from PIL import Image
 
 from torch.utils.data import Dataset
+from src.utils.util import get_tfms
 from torchvision import transforms
 
 means = [0.485, 0.456, 0.406]
@@ -15,22 +16,8 @@ class AlignCollate(object):
         self.imgH, self.imgW = imgsize
 
         assert self.mode in ["train", "val"], print("mode should be one of train or val]")
+        self.tfms = get_tfms(self.imgH, self.imgW, self.mode)
 
-        if self.mode == "train":
-            self.tfms = transforms.Compose([
-                transforms.Resize((int(self.imgH * 1.1), int(self.imgW * 1.1))),
-                transforms.RandomHorizontalFlip(),
-                transforms.RandomVerticalFlip(),
-                transforms.RandomCrop((self.imgH, self.imgW)),
-                transforms.ToTensor(),
-                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-            ])
-        elif self.mode == "val":
-            self.tfms = transforms.Compose([
-                transforms.Resize((int(self.imgH), int(self.imgW))),
-                transforms.ToTensor(),
-                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-            ])
 
     def __call__(self, batch_imgs_info):
         imgs_data = []

@@ -197,7 +197,7 @@ def validation1(net, class_num, epoch, val_dataloader):
     current_auc = roc_auc_score(all_onehot_label, all_prd_proba)
 
     # 记录日志
-    with open("checkpoint/log.txt", 'w') as f:
+    with open("checkpoints/log.txt", 'w') as f:
         print("第{}个epoch的验证结果：".format(epoch))
         print("第{}个epoch的验证结果：".format(epoch), file=f)
         print("验证集总图片：" + str(val_count) + "\t" + "识别正确的图片：" + str(eq_count) + "\t" + "准确率："

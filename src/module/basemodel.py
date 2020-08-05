@@ -3,15 +3,19 @@ import torch.nn as nn
 import cv2
 from PIL import Image
 
+from src.utils.util import get_tfms
 from src.module.networks import *
 
 
 class Net(object):
 
-    def __init__(self,model_type, model_config) -> None:
+    def __init__(self, model_type, device,model_config, mode="train") -> None:
         super().__init__()
         self.model_type = model_type
+        self.mode = mode
+        self.device = device
         self.model_arch = model_config['model_arch']
+        self.temp_model_path = model_config['temp_model']
         self.best_model_path = model_config['best_model']
         self.classes_num = model_config['classes_num']
         self.normal_axis = model_config['normal_axis']
@@ -21,23 +25,36 @@ class Net(object):
         self.max_frames = model_config['max_frames']
         self.input_shape = model_config['input_shape']
 
-        self.net = self.buildNetwork()
+        self.tfms = get_tfms(self.input_shape[0], self.input_shape[1], self.mode)
 
-    def buildNetwork(self):
+        self.model = self.build_model()
+
+    def build_model(self):
+        model =None
+        # 构建网络结构
         if self.model_arch == "B4":
-            net = Efficietnet_b4(self.classes_num)
-        return net
+            model = Efficietnet_b4(self.classes_num)
+            model = nn.DataParallel(model).to(self.device)
+        # 加载网络参数
+        if self.mode == "train":
+            if self.temp_model_path:
+                model.load_state_dict(torch.load(self.temp_model_path))
+            model.train()
+        elif self.mode == "val":
+            assert self.best_model_path is not None
+            model.load_state_dict(torch.load(self.best_model_path))
+            model.eval()
+        return model
 
-    def getNetwork(self):
-        return self.net
+    def get_model(self):
+        return self.model
 
     def preprocess(self, image):
-        image = image.resize(self.input_shape)
-        image_array = np.asarray(image).astype(np.float32)
-        image_array *= 1.0 / 255.0
+        image_array = self.tfms(image.resize((380, 380))).unsqueeze(0)
         return image_array
 
     def predict_img_api(self, im):
+        self.model.eval()
         try:
             img_w, img_h = im.size
             img_w = float(img_w)
@@ -69,12 +86,14 @@ class Net(object):
         else:
             img_list.append(self.preprocess(im))
 
-        pred = self.model.predict(np.array(img_list))
 
-        suf_score = np.max(self.suf_model.predict_proba(pred)[:, 1])
-        # print(suf_score)
-        suf_ret = int(suf_score > self.low_threshold) + int(suf_score > self.high_threshold)
-        return suf_score,pred.tolist()
+        with torch.no_grad():
+            pred = self.model(torch.cat(img_list, 0).cuda())
+            print(type(pred))
+            print(pred.shape)
+        risk_rate = 1 - np.min(np.sum(pred[:, self.normal_axis].cpu().numpy(), axis=1))
+        # risk_rate = 1 - np.min(np.sum(pred[:, self.normal_axis]))
+        return int(risk_rate > self.low_threshold) + int(risk_rate > self.high_threshold), pred.tolist()
         # return suf_ret, pred.tolist()
 
     def predict_webp_api(self, im_list):
