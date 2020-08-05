@@ -12,14 +12,14 @@ from torchvision import transforms
 class Efficietnet_b4(nn.Module):
     def __init__(self, classes):
         super(Efficietnet_b4, self).__init__()
-        self.backbone_ = EfficientNet.from_pretrained('efficientnet-b4')
+        self.basemodel1 = EfficientNet.from_pretrained('efficientnet-b4')
 
         #pytorch 卷积核的shape：[输出通道，输入通道，卷积核的高，卷积核的宽]
         #pytorch 卷积层的输出shape：[batch_size，输出通道，特征图高，特征图宽]
         #opencv 读取图片 BGR   BGR->rgb:  img = img[...,::-1]
-        for p in self.backbone_.named_parameters():
-            print("name:"+p[0]+"\t",p[1].size())
-        print('===========================================')
+        # for p in self.basemodel1.named_parameters():
+        #     print("name:"+p[0]+"\t",p[1].size())
+        # print('===========================================')
 
         self._avg_pooling = nn.AdaptiveAvgPool2d(1)
         self._dropout = nn.Dropout(0.5)
@@ -27,7 +27,7 @@ class Efficietnet_b4(nn.Module):
 
     def forward(self, inputs):
         bs = inputs.size(0)
-        x = self.backbone_.extract_features(inputs)
+        x = self.basemodel1.extract_features(inputs)
         x = self._avg_pooling(x)
         x = x.view(bs, -1)
         # x = self._dropout(x)

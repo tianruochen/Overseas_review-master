@@ -1,40 +1,40 @@
 {
-    "porn_model":{
+    "porn":{
         "train_path": "/data1/wangruihao/cocofun/porn/new_train/train.txt",
         "val_path": "/data1/wangruihao/cocofun/porn/new_train/test.txt",
         "suffix_cla_path": "",
-        "best_model": "/data/wangruihao/centernet/Centernet_2/EfficientNet/models/models_added_shits/best_accuracy_4_class_b4_accuracy_adl_0_380.pth",
+        "best_model": "/data/wangruihao/centernet/Centernet_2/EfficientNet/models/models_porn/best_accuracy_11_class_b4_accuracy_adl_380_0.901.pth",
         "best_acc_path": "",
         "best_auc_path": "",
         "checkpoint": "/checkpoint/porn_models",
         "model_arch": "B4",
         "optim_type": "SGD",
-        "batch_size": 32,
-        "normal_axis": "[1, 5]",
+        "batch_size": 24,
+        "normal_axis": [1, 5],
         "low_threshold": 0.2506,
         "high_threshold": 0.6892,
-        "class_num": 11,
+        "classes_num": 11,
         "max_frames": 20,
         "hw_rate": 1.0,
-        "input_shape": "(380,380)"
+        "input_shape": [380,380]
     },
-    "unporn_model":{
+    "unporn":{
         "train_path": "/data1/wangruihao/cocofun/mass1/train.txt",
         "val_path": "/data1/wangruihao/cocofun/mass1/val.txt",
         "suffix_cla_path": "",
-        "best_model": "/data/wangruihao/centernet/Centernet_2/EfficientNet/models/models_porn/best_accuracy_11_class_b4_accuracy_adl_380_0.901.pth",
+        "best_model": "/data/wangruihao/centernet/Centernet_2/EfficientNet/models/models_added_shits/best_accuracy_4_class_b4_accuracy_adl_0_380.pth",
         "best_acc_path": "",
         "best_auc_path": "",
         "checkpoint": "/checkpoint/unporn_models",
         "model_arch": "B4",
         "optim_type": "SGD",
         "batch_size": 16,
-        "normal_axis": "[2]",
+        "normal_axis": [2],
         "low_threshold": 0.3,
         "high_threshold": 0.5,
-        "class_num": 4,
+        "classes_num": 4,
         "max_frames": 20,
         "hw_rate": 1.0,
-        "input_shape":"(380,380)"
+        "input_shape": [380,380]
     }
 }

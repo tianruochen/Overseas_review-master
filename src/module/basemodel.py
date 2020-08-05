@@ -12,8 +12,8 @@ class Net(object):
         super().__init__()
         self.model_type = model_type
         self.model_arch = model_config['model_arch']
-        self.model_path = model_config['model_path']
-        self.classnum = model_config['class_num']
+        self.best_model_path = model_config['best_model']
+        self.classes_num = model_config['classes_num']
         self.normal_axis = model_config['normal_axis']
         self.low_threshold = model_config['low_threshold']
         self.high_threshold = model_config['high_threshold']
@@ -21,23 +21,21 @@ class Net(object):
         self.max_frames = model_config['max_frames']
         self.input_shape = model_config['input_shape']
 
-        self.model = self.buildNetwork()
+        self.net = self.buildNetwork()
 
     def buildNetwork(self):
         if self.model_arch == "B4":
-            model = Efficietnet_b4(self.classnum)
-            self.model = nn.DataParallel(model).cuda()
-            self.model.load_state_dict(torch.load(self.model_path))
-            self.model.eval()
-        return model
+            net = Efficietnet_b4(self.classes_num)
+        return net
+
+    def getNetwork(self):
+        return self.net
 
     def preprocess(self, image):
         image = image.resize(self.input_shape)
         image_array = np.asarray(image).astype(np.float32)
         image_array *= 1.0 / 255.0
         return image_array
-
-
 
     def predict_img_api(self, im):
         try:

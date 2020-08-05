@@ -2,7 +2,6 @@ import torch
 from PIL import Image
 
 from torch.utils.data import Dataset
-from torch.utils.data.dataset import T_co
 from torchvision import transforms
 
 means = [0.485, 0.456, 0.406]
@@ -19,16 +18,16 @@ class AlignCollate(object):
 
         if self.mode == "train":
             self.tfms = transforms.Compose([
-                transforms.Resize(int(self.imgH * 1.1, self.imgW * 1.1)),
+                transforms.Resize((int(self.imgH * 1.1), int(self.imgW * 1.1))),
                 transforms.RandomHorizontalFlip(),
                 transforms.RandomVerticalFlip(),
-                transforms.RandomCrop(self.imgH, self.imgW),
+                transforms.RandomCrop((self.imgH, self.imgW)),
                 transforms.ToTensor(),
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
             ])
         elif self.mode == "val":
             self.tfms = transforms.Compose([
-                transforms.Resize(int(self.imgH, self.imgW)),
+                transforms.Resize((int(self.imgH), int(self.imgW))),
                 transforms.ToTensor(),
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
             ])
@@ -82,15 +81,15 @@ class DataFactory(object):
         super().__init__()
         # batchsize = model_config["batch_size"], mode = "train", inputsize = model_config["input_size"]
         self.datalist = datalist
-        self.imgsize = model_config["input_size"]
+        self.input_shape = model_config["input_shape"]
         self.batch_size = model_config["batch_size"]
         self.mode = mode
-        self.AlignCollate = AlignCollate(self.mode, self.imgsize)
+        self.AlignCollate = AlignCollate(self.mode, self.input_shape)
 
     def get_dataloader(self):
         data_ = _Dataset(self.datalist)
         data_loader = torch.utils.data.DataLoader(
-            data_, batch_size=self.batch_data,
+            data_, batch_size=self.batch_size,
             shuffle=True, num_workers=max(int(self.batch_size / 4), 2),
             collate_fn=self.AlignCollate, pin_memory=False
         )
