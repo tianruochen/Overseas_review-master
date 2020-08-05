@@ -14,13 +14,6 @@ class Efficietnet_b4(nn.Module):
         super(Efficietnet_b4, self).__init__()
         self.basemodel1 = EfficientNet.from_pretrained('efficientnet-b4')
 
-        #pytorch 卷积核的shape：[输出通道，输入通道，卷积核的高，卷积核的宽]
-        #pytorch 卷积层的输出shape：[batch_size，输出通道，特征图高，特征图宽]
-        #opencv 读取图片 BGR   BGR->rgb:  img = img[...,::-1]
-        # for p in self.basemodel1.named_parameters():
-        #     print("name:"+p[0]+"\t",p[1].size())
-        # print('===========================================')
-
         self._avg_pooling = nn.AdaptiveAvgPool2d(1)
         self._dropout = nn.Dropout(0.5)
         self._fc = nn.Linear(1792, classes)
@@ -36,6 +29,7 @@ class Efficietnet_b4(nn.Module):
 
 
 class Efficietnet_b5(nn.Module):
+
     def __init__(self, classes):
         super(Efficietnet_b5, self).__init__()
         self.basemodel1 = EfficientNet.from_pretrained('efficientnet-b5')
@@ -155,7 +149,7 @@ class Resnet50(nn.Module):
 
 if __name__ == '__main__':
     tfms = transforms.Compose([transforms.Resize(800), transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),])#这是轮流操作的意思
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),])
     # resized_images = []
     img1 = tfms(Image.open('./simple/result3.jpg').resize((800,int(800*1.5)))).unsqueeze(0)
     l1 = []
@@ -166,7 +160,6 @@ if __name__ == '__main__':
 
     # densenet101 = densenet101(256)
     # densenet101(image_tensors)
-
 
     ## 定义DenseNet实例,加载与训练模型，并更改最后一层
     cnn = Resnet50(4)

@@ -2,8 +2,7 @@ import torch
 from PIL import Image
 
 from torch.utils.data import Dataset
-from src.utils.util import get_tfms
-from torchvision import transforms
+from utils.util import get_tfms
 
 means = [0.485, 0.456, 0.406]
 stds = [0.229, 0.224, 0.225]

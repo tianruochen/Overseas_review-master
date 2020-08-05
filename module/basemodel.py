@@ -1,10 +1,8 @@
 import numpy as np
 import torch.nn as nn
-import cv2
 from PIL import Image
 
-from src.utils.util import get_tfms
-from src.module.networks import *
+from utils.util import get_tfms
 
 
 class Net(object):
@@ -30,7 +28,7 @@ class Net(object):
         self.model = self.build_model()
 
     def build_model(self):
-        model =None
+        model = None
         # 构建网络结构
         if self.model_arch == "B4":
             model = Efficietnet_b4(self.classes_num)

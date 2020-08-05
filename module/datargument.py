@@ -20,23 +20,23 @@ from torchvision.transforms import *
 
 
 class Cutout(object):
-    '''Randomly mask out one or more patches from an image.
+    """Randomly mask out one or more patches from an image.
     Args:
         n_holes (int): Number of patches to cut out of each image.
         length (int): The length (in pixels) of each square patch.
-    '''
+    """
 
     def __init__(self, n_holes=1, length=100):
         self.n_holes = n_holes
         self.length = length
 
     def __call__(self, img):
-        '''
+        """
         Args:
             img (Tensor): Tensor image of size (C, H, W).
         Returns:
             Tensor: Image with n_holes of dimension length x length cut out of it.
-        '''
+        """
         h = img.size(1)
         w = img.size(2)
         mask = np.ones((h, w), np.float32)
@@ -66,13 +66,13 @@ Random erasing替换掉的区域大小是随机的。
 
 
 class RandomErasing(object):
-    '''
+    """
     probability: The probability that the operation will be performed.
     sl: min erasing area
     sh: max erasing area
     r1: min aspect ratio
     mean: erasing value
-    '''
+    """
 
     def __init__(self, probability=0.5, sl=0.02, sh=0.4, r1=0.3, mean=[0.4914, 0.4822, 0.4465]):
         self.probability = probability

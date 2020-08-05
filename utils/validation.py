@@ -63,7 +63,7 @@ def get_hard_examples(model, dataloader, num_classes, device):
         group.to_csv(summay_path + "{}.csv".format(name_classes[name]))
 
 
-def validation(model, val_dataset, num_classes, epoch, mode, device):
+def validation(model, val_dataset, num_classes, epoch, mode, device,val_num):
     '''
     统计验证集上的精确度与auc得分
     :param model:
@@ -72,6 +72,7 @@ def validation(model, val_dataset, num_classes, epoch, mode, device):
     :param epoch:
     :param mode:
     :param device:
+    :param val_num: 验证集图片数量
     :return:
     '''
     count = 0
