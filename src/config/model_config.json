@@ -10,7 +10,7 @@
         "checkpoints": "/checkpoint/porn_models",
         "model_arch": "B4",
         "optim_type": "SGD",
-        "batch_size": 24,
+        "batch_size": 16,
         "normal_axis": [1, 5],
         "low_threshold": 0.2506,
         "high_threshold": 0.6892,

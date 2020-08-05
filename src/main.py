@@ -26,7 +26,7 @@ warnings.filterwarnings("ignore")
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 parser = argparse.ArgumentParser(description='Overseas review project training')
-parser.add_argument('-m', '--model', default='pron', help="model type (default:pron)")
+parser.add_argument('-m', '--model', default='porn', help="model type (default:pron)")
 
 
 def train(model_type="porn"):
@@ -130,7 +130,7 @@ def train(model_type="porn"):
             # best_accuracy_11_class_b4_auc_adl_380.pth
             save_best_acc_path = os.path.join(
                 model_config["best_acc_path"],
-                "unpron_cla_{}_epoch_{}_acc_{:.4f}_auc_{:.4f}.pth".format(classes_num, epoch, current_acc, current_auc))
+                "unporn_cla_{}_epoch_{}_acc_{:.4f}_auc_{:.4f}.pth".format(classes_num, epoch, current_acc, current_auc))
             torch.save(model.state_dict(), save_best_acc_path)
             best_acc = current_acc if current_acc > best_acc else best_acc
             best_auc = current_auc if current_auc > best_auc else best_auc
