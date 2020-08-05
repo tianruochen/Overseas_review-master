@@ -5,17 +5,13 @@ import warnings
 import argparse
 import json
 import math
-import collections
 
 import torch
-import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
-from torch.nn import DataParallel
 
 from src.utils.util import getdata_from_dictory
-from src.utils.util import getMapDict
 
 from src.utils.util import Averager
 from src.utils.validation import validation
