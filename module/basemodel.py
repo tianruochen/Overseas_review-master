@@ -1,7 +1,9 @@
+import torch
 import numpy as np
 import torch.nn as nn
 from PIL import Image
 
+from module.networks import Efficietnet_b4
 from utils.util import get_tfms
 
 

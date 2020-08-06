@@ -31,14 +31,14 @@ warnings.filterwarnings("ignore")
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 parser = argparse.ArgumentParser(description='Overseas review project training')
-parser.add_argument('-m', '--model', default='porn', help="model type (default:pron)")
+parser.add_argument('-m', '--model', default='unporn', help="model type (default:pron)")
 
 
 def train(model_type="porn"):
 
     # *************************************读取配置，制作数据*************************************
     # 加载配置参数
-    model_config = json.load(open("config/model_config.json"))[model_type]
+    model_config = json.load(open("./config/model_config.json"))[model_type]
     print(model_config)
 
     batch_size = model_config["batch_size"]
