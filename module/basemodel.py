@@ -5,6 +5,7 @@ from PIL import Image
 
 from module.networks import Efficietnet_b4
 from utils.util import get_tfms
+import torch.nn.functional as F
 
 
 class Net(object):
@@ -42,7 +43,9 @@ class Net(object):
             model.train()
         elif self.mode == "val":
             assert self.best_model_path is not None
+            print(f"Load best model : {self.best_model_path}")
             model.load_state_dict(torch.load(self.best_model_path))
+            print("Loaded done!")
             model.eval()
         return model
 
@@ -89,8 +92,9 @@ class Net(object):
 
         with torch.no_grad():
             pred = self.model(torch.cat(img_list, 0).cuda())
-            print(type(pred))
-            print(pred.shape)
+            # print(type(pred))
+            # print(pred.shape)
+            pred = F.softmax(pred,dim=1)
         risk_rate = 1 - np.min(np.sum(pred[:, self.normal_axis].cpu().numpy(), axis=1))
         # risk_rate = 1 - np.min(np.sum(pred[:, self.normal_axis]))
         return int(risk_rate > self.low_threshold) + int(risk_rate > self.high_threshold), pred.tolist()

@@ -1,0 +1,36 @@
+#######################without softmax###########################
+old:
+total imgs : 71565, error imgs : 3645, img acc : 0.9490672814923496
+total invs : 4998, error invs : 4374, inv acc : 0.12484993997599039
+
+
+/home/changqing/workspaces/Overseas_classification-master/EfficientNet_Simple/model/unpron/unpron_cla_4_epoch_28_acc_0.9309_auc_0.9910.pth
+total imgs : 71565, error imgs : 10577, img acc : 0.8522042898064697
+total invs : 4998, error invs : 2752, inv acc : 0.4493797519007603
+
+Load best model : /home/changqing/workspaces/Overseas_classification-master/EfficientNet_Simple/model/unpron/unpron_cla_4_epoch_0_acc_0.9292_auc_0.9902.pth
+Loaded done!
+100%|█████████████████████████████████████| 4998/4998 [1:02:02<00:00,  1.34it/s]
+total imgs : 71565, error imgs : 1883, img acc : 0.9736882554321247
+total invs : 4998, error invs : 4487, inv acc : 0.10224089635854341
+
+Load best model : /home/changqing/workspaces/Overseas_classification-master/EfficientNet_Simple/model/unpron/unpron_cla_4_epoch_108_acc_0.9237_auc_0.9914.pth
+Loaded done!
+100%|███████████████████████████████████████| 4998/4998 [44:24<00:00,  1.88it/s]
+total imgs : 71565, error imgs : 8185, img acc : 0.8856284496611472
+total invs : 4998, error invs : 3108, inv acc : 0.37815126050420167
+
+
+
+###############################with softmax############################
+Load best model : /data/wangruihao/centernet/Centernet_2/EfficientNet/models/models_added_shits/best_accuracy_4_class_b4_accuracy_adl_0_380.pth
+Loaded done!
+100%|█████████████████████████████████████| 4998/4998 [1:13:10<00:00,  1.14it/s]
+total imgs : 71565, error imgs : 15805, img acc : 0.7791518200237546
+total invs : 4998, error invs : 2430, inv acc : 0.5138055222088835
+
+Load best model : /home/changqing/workspaces/Overseas_classification-master/EfficientNet_Simple/model/unpron/unpron_cla_4_epoch_28_acc_0.9309_auc_0.9910.pth
+Loaded done!
+100%|█████████████████████████████████████| 4998/4998 [1:17:02<00:00,  1.08it/s]
+total imgs : 71565, error imgs : 20523, img acc : 0.7132257388388179
+total invs : 4998, error invs : 1989, inv acc : 0.6020408163265306

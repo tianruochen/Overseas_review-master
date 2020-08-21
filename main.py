@@ -25,7 +25,7 @@ from module.dataset import DataFactory
 from module.basemodel import Net
 
 os.environ["CUDA DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "8"
 
 warnings.filterwarnings("ignore")
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

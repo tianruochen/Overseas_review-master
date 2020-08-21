@@ -6,10 +6,14 @@
 
 import os
 import torch
+import json
 import collections
 
 import numpy as np
 import pandas as pd
+from PIL import Image
+from module.basemodel import Net
+from utils.util import getdata_from_dictory, get_tfms
 from sklearn.metrics import roc_auc_score
 
 
@@ -151,7 +155,7 @@ def validation(model, val_dataset, num_classes, epoch, mode, device,val_num):
     return float(eq_count) / float(count), l, roc_auc_score_
 
 
-def validation1(net, class_num, epoch, val_dataloader):
+def validation1(net, class_num, epoch, val_dataloader,device):
     val_acc = 0  # 验证集上的准确性   =eq_count/val_count
     val_auc = 0  # 验证集上的auc值
     val_count = 0  # 验证集中图片的数量
@@ -212,3 +216,26 @@ def validation1(net, class_num, epoch, val_dataloader):
                                                 err_num_of_everyclass[i], all_num_of_everyclass[i]), file=f)
 
     return current_acc, current_auc
+
+
+
+def generate_logits(model_type, data_path, logits_path,device):
+    """
+    产生训练数据的logits（将所有数据前向传播通过网络的结果记录下来）
+    :return:
+    """
+
+    # 加载配置参数
+    model_config = json.load(open("./config/model_config.json"))[model_type]
+    imgH, imgW = model_config["input_shape"]
+
+    datalist = getdata_from_dictory(path=data_path)
+
+    # 构建网络+将模型移入cuda+加载网络参数
+    model = Net(model_type, device, model_config, mode="val").get_model()
+    tfms = get_tfms(imgH, imgW, mode="val")
+    with open(logits_path) as f:
+        for img_path, img_label in datalist:
+            img_tensor = tfms(Image.open(img_path).resize((imgH, imgW))).unsqueeze(0)
+            img_logits = model(img_tensor).squeeze(0)
+            print(img_path+'\t'+json.dumps(img_logits)+"\t"+json.dumps(img_label), file=f)

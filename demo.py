@@ -9,7 +9,7 @@ from module.basemodel import Net
 from utils.util import getdata_from_dictory, get_tfms
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "8"
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
