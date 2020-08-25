@@ -154,4 +154,13 @@ def train(model_type="porn"):
 if __name__ == "__main__":
     args = parser.parse_args()
     print(args)
+    """
+    混合精度训练：
+    from apex import amp
+    model, optimizer = amp.initialize(model, optimizer, opt_level='O1')
+    with amp.scale_loss(loss, optimizer) as scaled_loss:
+        scaled_loss.backward()
+    """
     train(args.model)
+
+

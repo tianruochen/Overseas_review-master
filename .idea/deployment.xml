@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="changqing@172.16.2.140:22">
+  <component name="PublishConfigData" autoUpload="Always" serverName="changqing@172.16.2.140:22 password">
     <serverData>
       <paths name="changqing@10.10.101.15:22">
         <serverdata>
@@ -10,6 +10,20 @@
         </serverdata>
       </paths>
       <paths name="changqing@172.16.2.140:22">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/changqing/workspace/Overseas_review-master" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="changqing@172.16.2.140:22 (1)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/changqing/workspace/Overseas_review-master" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="changqing@172.16.2.140:22 password">
         <serverdata>
           <mappings>
             <mapping deploy="/home/changqing/workspace/Overseas_review-master" local="$PROJECT_DIR$" />

@@ -1,1 +1,6 @@
 该目录存放训练好的模型以及后接分类器模型
+
+从15机器上拉取模型权重到140机器：
+scp -P 2222 changqing@210.12.101.146:/data/wangruihao/centernet/Centernet_2/EfficientNet/models/models_added_shits/best_accuracy_4_class_b4_accuracy_adl_0_380.pth .
+
+scp -P 2222 changqing@210.12.101.146:/home/changqing/workspaces/Overseas_classification-master/EfficientNet_Simple/model/unpron/unpron_cla_4_epoch_28_acc_0.9309_auc_0.9910.pth .

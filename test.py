@@ -14,13 +14,14 @@ import efficientnet.model as eff_model
 from tqdm import tqdm
 import imageio
 from PIL import ImageFile, Image
-import webp
+# import webp
 import sklearn
 import glob
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 
 from module.basemodel import Net
+from utils.validation import generate_logits
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
@@ -37,11 +38,14 @@ def trans_array(input_array):
 
 #########################################
 # 评估数据集
-val_unpron_dataset = {
-    "cocofun_normal_path": "/data1/zhaoshiyu/cocofun_normal",
+val_unporn_dataset = {
+    "cocofun_normal_path" : "/data1/zhaoshiyu/cocofun_normal",
+    "cocofun_unnorm_path" : "/data/wangruihao/serious_data/kill_image",
+    #### video #########
     "cocofun_disgust_path": "/data/wangruihao/serious_data/disgusting",
     "cocofun_sensitive_path": "/data/wangruihao/serious_data/sensitive"
 }
+########################################
 
 
 def validate_pron():
@@ -421,47 +425,160 @@ def validate_pron():
     # porn normal injudge_rate = 21.80 %
 
 
-def validate_unpron(classifier,model_config):
-    cocofun_normal_path = val_unpron_dataset["cocofun_normal_path"]
-    best_model_name = model_config["best_model"].split("/")[-1]
-    save_logits_name = best_model_name + "_logits.txt"
-    save_logits_dir = os.path.join(os.path.dirname(os.path.abspath(__file__))+"/summary/logits", cocofun_normal_path.split("/")[-1])
-    if not os.path.exists(save_logits_dir):
-        os.mkdir(save_logits_dir)
+def validate_on_normal_dataset():
+    """pron 后接分类器的建模评估"""
+    # file_path = "/data1/zhaoshiyu/porn_result_temp/porn0229_suffix_result.txt"
+    # 后接分类器的训练数据路径  （EfficientNet的输出）
+    suffix_file_path = "/home/changqing/workspace/Overseas_review-master/summary/logits/cocofun_normal/best_accuracy_4_class_b4_accuracy_adl_0_380.pth_logits.txt"
+    suffix_file_path = "/home/changqing/workspace/Overseas_review-master/summary/logits/cocofun_normal/unpron_cla_4_epoch_28_acc_0.9309_auc_0.9910.pth_logits.txt"
 
-    save_logits_path = os.path.join(save_logits_dir, save_logits_name)
+    root_dir = os.path.dirname(suffix_file_path)
+    model_name = suffix_file_path.split('/')[-1].split('.')[0]  # porn0620
+    recall_mode = "image"
 
-    invitation_list = os.listdir(cocofun_normal_path)
-    img_count = 0
-    error_img_count = 0
-    invitation_count = len(invitation_list)
-    error_invitation_count = 0
-    error_invitation_list = []
-    with open(save_logits_path, "w+") as f:
-        # for every invitation
-        for invitation in tqdm(invitation_list):
-            imglist_of_invitation = glob.glob(os.path.join(cocofun_normal_path,invitation)+"/*jp?g")
-            imglist_of_invitation.extend(glob.glob(os.path.join(cocofun_normal_path,invitation)+"/*png"))
-            normal_invitation = True
-            # for every image
-            for imgpath in imglist_of_invitation:
-                img = Image.open(imgpath).convert("RGB")
-                img_count += 1
-                # pred without softmax
-                risk,pred = classifier.predict_img_api(img)
-                pred = json.dumps(pred)
-                f.write(f"{imgpath}" + "\t" + f"{pred}" + "\t" + f"{risk}" + "\n")
-                if risk > 0:
-                    error_invitation_list.append(invitation)
-                    normal_invitation = False
-                    error_img_count += 1
-            if normal_invitation:
-                error_invitation_count += 1
-    img_acc = (img_count - error_img_count) / img_count
-    invitation_acc = (invitation_count - error_invitation_count) / invitation_count
-    print(f"total imgs : {img_count}, error imgs : {error_img_count}, img acc : {img_acc} ")
-    print(f"total invs : {invitation_count}, error invs : {error_invitation_count}, inv acc : {invitation_acc}")
+    thresholds = [0.5, 0.6, 0.7, 0.8, 0.9]
 
+    with open(suffix_file_path, 'r') as f:
+        file_info_list = f.read().split("\n")
+
+        print("Trianing data : ", len(file_info_list))  # 44720
+        print(file_info_list[:5])
+        invitation_map = {}
+        # img_score_list = []
+        logits = []
+
+        for line in file_info_list:
+            if not line:
+                continue
+
+            line = line.split('\t')
+            invitation_name = os.path.dirname(line[0])
+            logit = None
+            if recall_mode == "image":
+                logit = np.array(json.loads(line[1])).min(axis=0)
+            else:
+                logit = np.array(json.loads(line[1])).min(axis=0)
+            if invitation_name not in invitation_map:
+                invitation_map[invitation_name] = logit[None, :]
+            else:
+                invitation_map[invitation_name] = np.concatenate([invitation_map[invitation_name], logit[None, :]],
+                                                                 axis=0)
+                # cmd + backspace 删除当前行
+            logits.append(logit)
+
+        logits = np.array(logits)
+        print(logits[:5])
+
+        for threshold in thresholds:
+            if recall_mode == "image":
+                recall_logits = logits[logits[:, 2] > threshold]
+                recall = recall_logits.shape[0] / logits.shape[0]
+                print("under threshold {}, image recall: {}--{}/{}".format(threshold, recall, recall_logits.shape[0],
+                                                                           logits.shape[0]))
+            elif recall_mode == "invitation":
+                recall_count = 0
+                for _, invitation_logits in invitation_map.items():
+                    if invitation_logits.min(axis=0)[2] > threshold:
+                        recall_count += 1
+                recall = recall_count / len(invitation_map.keys())
+                print("under threshold {}, invitation recall: {}".format(threshold, recall, recall_count,
+                                                                         len(invitation_map.keys())))
+
+        # false_recall_rates = [0.0 + i * 0.02 for i in range(1, 20)]  # 误召率列表
+        # print(false_recall_rates)
+        # logits_score = np.sort(logits[:, 2])
+        # print(logits_score[:5])
+        # thresholds = [logits_score[int(i * logits.shape[0])] for i in false_recall_rates]
+        #
+        # print(thresholds)
+        # old_threshold = [0.00010102284431923181, 0.0015352037735283375, 0.0033047317992895842, 0.015809779986739159,
+        #                  0.051457248628139496, 0.12242656201124191, 0.21415027976036072, 0.33594521880149841,
+        #                  0.45518290996551514, 0.58477669954299927, 0.6957353949546814, 0.78998690843582153,
+        #                  0.85753726959228516, 0.90254783630371094, 0.93244779109954834, 0.95385324954986572,
+        #                  0.96944737434387207, 0.97890317440032959, 0.98287522792816162]
+        # new_threshold = [0.031195204704999924, 0.079025104641914368, 0.13231100142002106, 0.18247915804386139,
+        #                  0.26748287677764893, 0.34285911917686462, 0.40871742367744446, 0.46329742670059204,
+        #                  0.51341342926025391, 0.55436861515045166, 0.59521442651748657, 0.63195407390594482,
+        #                  0.6621696949005127, 0.69205981492996216, 0.71700799465179443, 0.73953217267990112,
+        #                  0.76203876733779907, 0.78064656257629395, 0.7974780797958374]
+
+
+def validate_on_unnorm_dataset():
+    """pron 后接分类器的建模评估"""
+    # file_path = "/data1/zhaoshiyu/porn_result_temp/porn0229_suffix_result.txt"
+    # 后接分类器的训练数据路径  （EfficientNet的输出）
+    injudge_ratio = [0.05, 0.1, 0.15, 0.2, 0.25, 0.30, 0.35, 0.4, 0.45, 0.5, 0.55, 0.60, 0.65, 0.70, 0.75, 0.8, 0.85, 0.9, 0.95]
+    thresholds = [2.3610955395270139e-05, 0.00037471801624633372, 0.0026455002371221781, 0.012226594612002373, 0.039714712649583817, 0.10242787748575211, 0.16242332756519318, 0.26573309302330017, 0.40980362892150879, 0.62365454435348511, 0.79381150007247925, 0.90466523170471191, 0.95984184741973877, 0.98564887046813965, 0.99586760997772217, 0.99894899129867554, 0.99980181455612183, 0.99998104572296143, 0.99999964237213135]
+
+    suffix_file_path = "/home/changqing/workspace/Overseas_review-master/summary/logits/cocofun_unnorm/best_accuracy_4_class_b4_accuracy_adl_0_380.pth_logits.txt"
+
+    # thresholds = [0.018703039735555649, 0.050916418433189392, 0.11276190727949142, 0.18457616865634918, 0.26059725880622864, 0.33027967810630798, 0.39813613891601562, 0.45077529549598694, 0.5128401517868042, 0.57332175970077515, 0.63186115026473999, 0.68904435634613037, 0.74082940816879272, 0.78734564781188965, 0.83137845993041992, 0.86963528394699097, 0.90252578258514404, 0.93590682744979858, 0.96521198749542236]
+    # suffix_file_path = "/home/changqing/workspace/Overseas_review-master/summary/logits/cocofun_unnorm/unpron_cla_4_epoch_28_acc_0.9309_auc_0.9910.pth_logits.txt"
+
+
+    root_dir = os.path.dirname(suffix_file_path)
+    model_name = suffix_file_path.split('/')[-1].split('.')[0]  # porn0620
+    recall_mode = "invitation"
+
+
+    with open(suffix_file_path, 'r') as f:
+        file_info_list = f.read().split("\n")
+
+        print("Trianing data : ", len(file_info_list))
+        print(file_info_list[:5])
+        invitation_map = {}
+        # img_score_list = []
+        logits = []
+
+        for line in file_info_list:
+            if not line:
+                continue
+
+            line = line.split('\t')
+            invitation_name = os.path.dirname(line[0])
+            logit = None
+            if recall_mode == "image":
+                logit = np.array(json.loads(line[1])).min(axis=0)
+            else:
+                logit = np.array(json.loads(line[1])).min(axis=0)
+            if invitation_name not in invitation_map:
+                invitation_map[invitation_name] = logit[None, :]
+            else:
+                invitation_map[invitation_name] = np.concatenate([invitation_map[invitation_name], logit[None, :]],
+                                                                 axis=0)
+                # cmd + backspace 删除当前行
+            logits.append(logit)
+
+        logits = np.array(logits)
+        print(logits[:5])
+
+        for threshold in thresholds:
+            if recall_mode == "image":
+                recall_logits = logits[logits[:, 2] > threshold]
+                recall = recall_logits.shape[0] / logits.shape[0]
+                print("under threshold {}, image false recall: {}--{}/{}".format(threshold, recall, recall_logits.shape[0],
+                                                                           logits.shape[0]))
+            elif recall_mode == "invitation":
+                recall_count = 0
+                for _, invitation_logits in invitation_map.items():
+                    if invitation_logits.min(axis=0)[2] > threshold:
+                        recall_count += 1
+                recall = recall_count / len(invitation_map.keys())
+                print("injudge: {.2f},  threshold {.5f}, invitation outgassing rate recall: {.3f}--{4d}/{4d}".format(
+                    injudge_ratio[thresholds.index(threshold)],threshold, recall, recall_count,
+                                                                         len(invitation_map.keys())))
+
+        # false_recall_rates = [0.0 + i * 0.02 for i in range(1, 20)]  # 误召率列表
+        # print(false_recall_rates)
+        # logits_score = np.sort(logits[:, 2])
+        # print(logits_score[:5])
+        # thresholds = [logits_score[int(i * logits.shape[0])] for i in false_recall_rates]
+        # print(thresholds)
+
+def validate_unpron():
+        # validate_on_normal_dataset()
+
+        validate_on_unnorm_dataset()
 
 
 
@@ -471,13 +588,9 @@ if __name__ == "__main__":
     device = ("cuda" if torch.cuda.is_available() else "cpu")
     model_type = "unporn"
     mode = "val"
-    if model_type == "unporn":
-        model_config = json.load(open("./config/model_config.json"))[model_type]
-        batch_size = 1
-        model_config["best_model"] = "/home/changqing/workspaces/Overseas_classification-master/EfficientNet_Simple/model/unpron/unpron_cla_4_epoch_28_acc_0.9309_auc_0.9910.pth"
-        classifier = Net(model_type,device,model_config,mode)
 
-        validate_unpron(classifier,model_config)
+    if model_type == "unporn":
+        validate_unpron()
 
     elif model_type == "porn":
         validate_pron()

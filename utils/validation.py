@@ -8,6 +8,8 @@ import os
 import torch
 import json
 import collections
+from tqdm import tqdm
+import glob
 
 import numpy as np
 import pandas as pd
@@ -16,6 +18,17 @@ from module.basemodel import Net
 from utils.util import getdata_from_dictory, get_tfms
 from sklearn.metrics import roc_auc_score
 
+
+#########################################
+# 评估数据集
+val_unporn_dataset = {
+    "cocofun_normal" : "/data1/zhaoshiyu/cocofun_normal",
+    "cocofun_unnorm" : "/data/wangruihao/serious_data/kill_image",
+    #### video #########
+    "cocofun_disgust_path": "/data/wangruihao/serious_data/disgusting",
+    "cocofun_sensitive_path": "/data/wangruihao/serious_data/sensitive"
+}
+########################################
 
 def get_hard_examples(model, dataloader, num_classes, device):
     '''
@@ -219,23 +232,130 @@ def validation1(net, class_num, epoch, val_dataloader,device):
 
 
 
-def generate_logits(model_type, data_path, logits_path,device):
+def generate_logits(model_type,model_config, data_path,save_logits_dir,device):
     """
     产生训练数据的logits（将所有数据前向传播通过网络的结果记录下来）
     :return:
     """
 
-    # 加载配置参数
-    model_config = json.load(open("./config/model_config.json"))[model_type]
-    imgH, imgW = model_config["input_shape"]
-
-    datalist = getdata_from_dictory(path=data_path)
+    # # 加载配置参数
+    # model_config = json.load(open("./config/model_config.json"))[model_type]
 
     # 构建网络+将模型移入cuda+加载网络参数
-    model = Net(model_type, device, model_config, mode="val").get_model()
-    tfms = get_tfms(imgH, imgW, mode="val")
-    with open(logits_path) as f:
-        for img_path, img_label in datalist:
-            img_tensor = tfms(Image.open(img_path).resize((imgH, imgW))).unsqueeze(0)
-            img_logits = model(img_tensor).squeeze(0)
-            print(img_path+'\t'+json.dumps(img_logits)+"\t"+json.dumps(img_label), file=f)
+    classifier = Net(model_type, device, model_config, mode="val")
+
+
+    best_model_name = model_config["best_model"].split("/")[-1]
+    save_logits_name = best_model_name + "_logits.txt"
+    # save_logits_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)) + "/summary/logits",
+    #                                data_path.split("/")[-1])
+    if not os.path.exists(save_logits_dir):
+        os.mkdir(save_logits_dir)
+
+    save_logits_path = os.path.join(save_logits_dir, save_logits_name)
+
+    invitation_list = os.listdir(data_path)
+    img_count = 0
+    error_img_count = 0
+    invitation_count = len(invitation_list)
+    print(invitation_count)
+    error_invitation_count = 0
+    error_invitation_list = []
+    with open(save_logits_path, "w+") as f:
+        # for every invitation
+        for invitation in tqdm(invitation_list):
+            imglist_of_invitation = glob.glob(os.path.join(data_path, invitation) + "/*jp*g")
+            imglist_of_invitation.extend(glob.glob(os.path.join(data_path, invitation) + "/*png"))
+            normal_invitation = True
+            # for every image
+            for imgpath in imglist_of_invitation:
+                try:
+                    img = Image.open(imgpath).convert("RGB")
+                except:
+                    continue
+                img_count += 1
+                # pred without softmax
+                risk, pred = classifier.predict_img_api(img)
+                pred = json.dumps(pred)
+                f.write(f"{imgpath}" + "\t" + f"{pred}" + "\t" + f"{risk}" + "\n")
+                if risk > 0:
+                    error_invitation_list.append(invitation)
+                    normal_invitation = False
+                    error_img_count += 1
+            if normal_invitation:
+                error_invitation_count += 1
+    img_acc = (img_count - error_img_count) / img_count
+    invitation_acc = (invitation_count - error_invitation_count) / invitation_count
+    print(f"total imgs : {img_count}, error imgs : {error_img_count}, img acc : {img_acc} ")
+    print(f"total invs : {invitation_count}, error invs : {error_invitation_count}, inv acc : {invitation_acc}")
+
+
+
+def generate_threshold():
+    """pron 后接分类器的建模评估"""
+    injudge_ratio = [0+i*0.05 for i in range(1,20)]
+    print(injudge_ratio)
+    suffix_file_path = "/home/changqing/workspace/Overseas_review-master/summary/logits/cocofun_normal/best_accuracy_4_class_b4_accuracy_adl_0_380.pth_logits.txt"
+    suffix_file_path = "/home/changqing/workspace/Overseas_review-master/summary/logits/cocofun_normal/unpron_cla_4_epoch_28_acc_0.9309_auc_0.9910.pth_logits.txt"
+
+    invitation_map = {}
+    logits = []
+    invit_score_list = []
+
+    with open(suffix_file_path, 'r') as f:
+        file_info_list = f.read().split("\n")
+
+        for line in file_info_list:
+            if not line:
+                continue
+            line = line.split('\t')
+            invitation_name = os.path.dirname(line[0])
+            logit = np.array(json.loads(line[1])).min(axis=0)
+
+            # image_score_list.append(logit[2])
+
+            if invitation_name not in invitation_map:
+                invitation_map[invitation_name] = logit[None, :]
+            else:
+                invitation_map[invitation_name] = np.concatenate([invitation_map[invitation_name], logit[None, :]], axis=0)
+
+        for invitation_name,invitation_logit in invitation_map.items():
+            # cmd + backspace 删除当前行
+            min_invitation_score = np.min(invitation_logit,axis=0)[2]
+            invit_score_list.append(min_invitation_score)
+
+        logits.append(logit)
+
+        invit_score_list.sort()
+
+        thresholds = []
+        for ratio in injudge_ratio:
+            # image_mode_threshold = image_score_list[int(ratio*len(image_score_list))]
+            thresholds.append(invit_score_list[int(ratio*len(invit_score_list))])
+            # invit_mode_threshold = invit_score_list[int(ratio*len(invit_score_list))]
+
+        # print(f"image_mode_threshold: {image_mode_threshold}   invit_mode_threshold:{invit_mode_threshold}")
+        print(thresholds)
+
+
+
+if __name__ == "__main__":
+    # device = ("cuda" if torch.cuda.is_available() else "cpu")
+    # model_type = "unporn"
+    # mode = "val"
+
+    generate_threshold()
+    # if model_type == "unporn":
+    #     dataset_name = "cocofun_unnorm"
+    #     cocofun_unnorm_path = val_unporn_dataset[dataset_name]
+    #     model_config = json.load(open("../config/model_config.json"))[model_type]
+    #     model_config["best_model"] = "/home/changqing/workspace/Overseas_review-master/model/unpron_cla_4_epoch_28_acc_0.9309_auc_0.9910.pth"
+    #     # summary_path = os.path.dirname(os.getcwd())
+    #     save_logits_dir = os.path.join(os.path.dirname(os.getcwd()) + "/summary/logits",dataset_name)
+    #     print(save_logits_dir)
+    #     if not os.path.exists(save_logits_dir):
+    #         os.mkdir(save_logits_dir)
+    #     generate_logits(model_type, model_config,cocofun_unnorm_path,save_logits_dir,device)
+    #
+    # elif model_type == "porn":
+    #     pass
