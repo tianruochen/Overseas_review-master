@@ -6,9 +6,10 @@
 
 import math
 import random
-from PIL import Image
+from PIL import Image,ImageFilter
 
 import torch
+import cv2
 import numpy as np
 from torchvision.transforms import *
 
@@ -82,9 +83,9 @@ class RandomErasing(object):
         self.r1 = r1
 
     def __call__(self, img):
+
         if random.uniform(0, 1) > self.probability:
             return img
-
         for attempt in range(100):
             area = img.size()[1] * img.size()[2]
             target_area = random.uniform(self.sl, self.sh) * area
@@ -97,11 +98,11 @@ class RandomErasing(object):
                 x1 = random.randint(0, img.size()[1] - h)
                 y1 = random.randint(0, img.size()[2] - w)
                 if img.size()[0] == 3:
-                    img[0, x1:x1 + h, y1:y1 + w] = self.mean[0]
-                    img[1, x1:x1 + h, y1:y1 + w] = self.mean[1]
-                    img[2, x1:x1 + h, y1:y1 + w] = self.mean[2]
+                    img[0, x1:x1 + h, y1:y1 + w] = self.mean[0] * 255
+                    img[1, x1:x1 + h, y1:y1 + w] = self.mean[1] * 255
+                    img[2, x1:x1 + h, y1:y1 + w] = self.mean[2] * 255
                 else:
-                    img[0, x1:x1 + h, y1:y1 + w] = self.mean[0]
+                    img[0, x1:x1 + h, y1:y1 + w] = self.mean[0] * 255
                 return img
         return img
 
@@ -121,3 +122,63 @@ for (images, labels) in train_loader:
     loss = l * criterion(outputs, labels_a) + (1 - l) * criterion(outputs, labels_b)
     acc = l * accuracy(outputs, labels_a)[0] + (1 - l) * accuracy(outputs, labels_b)[0]
 """
+
+class HSVArgument(object):
+    def __init__(self,sat=1.5,exp=1.5,hue=0.1):
+
+        self.dhue = self.rand_uniform_strong(-hue, hue)
+        self.dsat = self.rand_scale(sat)
+        self.dexp = self.rand_scale(exp)
+
+    def __call__(self, image):
+
+        hsv_src = cv2.cvtColor(np.array(image).astype(np.float32), cv2.COLOR_RGB2HSV)  # RGB to HSV
+        hsv = cv2.split(hsv_src)
+        hsv[1] *= self.dsat
+        hsv[2] *= self.dexp
+        hsv[0] += 179 * self.dhue
+        hsv_src = cv2.merge(hsv)
+        hsved_img = np.clip(cv2.cvtColor(hsv_src, cv2.COLOR_HSV2RGB), 0, 255)
+        return hsved_img
+
+    def rand_scale(self,s):
+        scale = self.rand_uniform_strong(1, s)
+        if random.randint(0, 1) % 2:
+            return scale
+        return 1. / scale
+
+    def rand_uniform_strong(self,min, max):
+        if min > max:
+            swap = min
+            min = max
+            max = swap
+        return random.random() * (max - min) + min
+
+class GaussianNoise(object):
+    def __init__(self, mean=0,std=100):
+        self.mean = mean
+        self.std = std
+
+    def __call__(self, img):
+        img = np.array(img)
+        # noise = np.array(img.shape)
+        noise = img.copy()
+        cv2.randn(noise, self.mean, self.std)
+        img = img + noise
+        img = np.clip(img, 0, 255)
+        return Image.fromarray(img)
+
+
+class RandomBlur(object):
+    def __init__(self, ksize=7):
+        self.ksize = ksize
+
+    def __call__(self, img):
+        if random.randint(0, 1):
+            return img.filter(ImageFilter.GaussianBlur(radius=5))
+            #cv2.GaussianBlur(np.array(img), (self.ksize, self.ksize), 0)
+        return img
+
+
+
+

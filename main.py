@@ -25,7 +25,7 @@ from module.dataset import DataFactory
 from module.basemodel import Net
 
 os.environ["CUDA DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"] = "8"
+os.environ["CUDA_VISIBLE_DEVICES"] = "9"
 
 warnings.filterwarnings("ignore")
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -125,7 +125,7 @@ def train(model_type="porn"):
 
         # 每一个epoch结束，在验证集上进行测试,记录在验证集上的损失，并写入日志
         model.eval()
-        with torch.no_grad:
+        with torch.no_grad():
             current_acc, l, current_auc = validation(model, epoch, int(model_config["class_num"]), val_dataloader, val_num)
 
         # 保存模型参数后者checkpoint

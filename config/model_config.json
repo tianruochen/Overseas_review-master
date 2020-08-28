@@ -2,6 +2,7 @@
     "porn":{
         "train_path": "/data1/wangruihao/cocofun/porn/new_train/train.txt",
         "val_path": "/data1/wangruihao/cocofun/porn/new_train/test.txt",
+        "test_path": "",
         "suffix_cla_path": "",
         "temp_model": "/data/wangruihao/centernet/Centernet_2/EfficientNet/models/models_porn/best_accuracy_11_class_b4_accuracy_adl_380_0.901.pth",
         "best_model": "/data/wangruihao/centernet/Centernet_2/EfficientNet/models/models_porn/best_accuracy_11_class_b4_accuracy_adl_380_0.901.pth",
@@ -22,6 +23,7 @@
     "unporn":{
         "train_path": "/data1/wangruihao/cocofun/mass1/train.txt",
         "val_path": "/data1/wangruihao/cocofun/mass1/val.txt",
+        "test_path": "",
         "suffix_cla_path": "",
         "temp_model": "/data/wangruihao/centernet/Centernet_2/EfficientNet/models/models_added_shits/best_accuracy_4_class_b4_accuracy_adl_0_380.pth",
         "best_model": "/data/wangruihao/centernet/Centernet_2/EfficientNet/models/models_added_shits/best_accuracy_4_class_b4_accuracy_adl_0_380.pth",

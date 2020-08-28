@@ -23,7 +23,7 @@ from sklearn.metrics import roc_auc_score
 # 评估数据集
 val_unporn_dataset = {
     "cocofun_normal" : "/data1/zhaoshiyu/cocofun_normal",
-    "cocofun_unnorm" : "/data/wangruihao/serious_data/kill_image",
+    "cocofun_unnorm" : "/data1/zhaoshiyu/temp/kill_image",
     #### video #########
     "cocofun_disgust_path": "/data/wangruihao/serious_data/disgusting",
     "cocofun_sensitive_path": "/data/wangruihao/serious_data/sensitive"
@@ -294,6 +294,7 @@ def generate_logits(model_type,model_config, data_path,save_logits_dir,device):
 def generate_threshold():
     """pron 后接分类器的建模评估"""
     injudge_ratio = [0+i*0.05 for i in range(1,20)]
+    injudge_ratio = [0.521]
     print(injudge_ratio)
     suffix_file_path = "/home/changqing/workspace/Overseas_review-master/summary/logits/cocofun_normal/best_accuracy_4_class_b4_accuracy_adl_0_380.pth_logits.txt"
     suffix_file_path = "/home/changqing/workspace/Overseas_review-master/summary/logits/cocofun_normal/unpron_cla_4_epoch_28_acc_0.9309_auc_0.9910.pth_logits.txt"
@@ -337,7 +338,56 @@ def generate_threshold():
         # print(f"image_mode_threshold: {image_mode_threshold}   invit_mode_threshold:{invit_mode_threshold}")
         print(thresholds)
 
+def get_injudge_ration(threshold = 0.7):
+    """pron 后接分类器的建模评估"""
 
+    suffix_file_path = "/home/changqing/workspace/Overseas_review-master/summary/logits/cocofun_normal/best_accuracy_4_class_b4_accuracy_adl_0_380.pth_logits.txt"
+    # suffix_file_path = "/home/changqing/workspace/Overseas_review-master/summary/logits/cocofun_normal/unpron_cla_4_epoch_28_acc_0.9309_auc_0.9910.pth_logits.txt"
+
+    invitation_map = {}
+    logits = []
+    invit_score_list = []
+
+    with open(suffix_file_path, 'r') as f:
+        file_info_list = f.read().split("\n")
+
+        for line in file_info_list:
+            if not line:
+                continue
+            line = line.split('\t')
+            invitation_name = os.path.dirname(line[0])
+            logit = np.array(json.loads(line[1])).min(axis=0)
+
+            # image_score_list.append(logit[2])
+
+            if invitation_name not in invitation_map:
+                invitation_map[invitation_name] = logit[None, :]
+            else:
+                invitation_map[invitation_name] = np.concatenate([invitation_map[invitation_name], logit[None, :]],
+                                                                 axis=0)
+
+        for invitation_name, invitation_logit in invitation_map.items():
+            # cmd + backspace 删除当前行
+            min_invitation_score = np.min(invitation_logit, axis=0)[2]
+            invit_score_list.append(min_invitation_score)
+
+        logits.append(logit)
+        invit_num = len(invit_score_list)
+        invit_score_list.sort()
+
+        invit_score_list = np.array(invit_score_list)
+        injudge_num = np.sum(invit_score_list < threshold)
+        injudge_ratio = injudge_num / invit_num
+
+        print(f"injudge nums: {injudge_num}, total invits: {invit_num} ,injudge ratio: {injudge_ratio}")
+
+        # thresholds = []
+        # for ratio in injudge_ratio:
+        #     # image_mode_threshold = image_score_list[int(ratio*len(image_score_list))]
+        #     thresholds.append(invit_score_list[int(ratio * len(invit_score_list))])
+            # invit_mode_threshold = invit_score_list[int(ratio*len(invit_score_list))]
+
+        # print(f"image_mode_threshold: {image_mode_threshold}   invit_mode_threshold:{invit_mode_threshold}")
 
 if __name__ == "__main__":
     # device = ("cuda" if torch.cuda.is_available() else "cpu")
@@ -345,6 +395,8 @@ if __name__ == "__main__":
     # mode = "val"
 
     generate_threshold()
+    # get_injudge_ration()
+
     # if model_type == "unporn":
     #     dataset_name = "cocofun_unnorm"
     #     cocofun_unnorm_path = val_unporn_dataset[dataset_name]

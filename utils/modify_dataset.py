@@ -6,7 +6,9 @@
 
 import pandas as pd
 import os
+import json
 from tqdm import tqdm
+import numpy as np
 
 # pd.set_option("display.max_columns", None)
 
@@ -74,9 +76,74 @@ def generate_dataset(modify_data_list, mode):
             print(path + "\t" + str(int(new_label)), file=f)
         print("{} data generate done: {}".format(mode, len(new_data_list)))
 
+def get_outlier(logits_name, data_type="normal",thres=0.5):
+    """
+    :param logits_name: logits file name   .txt
+    :param data_type:   normal dataset or unnorm dataset
+    :return:
+    """
+    save_outlier_dir = os.path.join(os.path.dirname(os.getcwd()), "summary/outlier/unporn/")
+    print(save_outlier_dir)
+    if not os.path.exists(save_outlier_dir):
+        os.makedirs(save_outlier_dir)
+    logits_dir = os.path.join(os.path.dirname(os.getcwd()),"summary/logits/unporn/")
+    if data_type == "normal":
+        logits_dir = logits_dir + "cocofun_normal/"
+        save_outlier_dir = save_outlier_dir + "cocofun_normal"
+    else:
+        logits_dir = logits_dir +"cocofun_unnorm/"
+        save_outlier_dir = save_outlier_dir + "cocofun_unnorm"
+
+    logits_path = os.path.join(logits_dir,logits_name)
+    save_outlier_path = os.path.join(save_outlier_dir,logits_name.split('.')[0] + ".txt")
+    print(save_outlier_path)
+
+    with open(logits_path, 'r') as f:
+        file_info_list = f.read().split("\n")
+        invitation_map = {}
+        invitation_list = []
+        logits = []
+
+        for line in file_info_list:
+            if not line:
+                continue
+            line = line.split('\t')
+            invitation_name = os.path.dirname(line[0])
+            logit = np.array(json.loads(line[1])).min(axis=0)
+            if invitation_name not in invitation_map:
+                invitation_map[invitation_name] = logit[None, :]
+            else:
+                invitation_map[invitation_name] = np.concatenate([invitation_map[invitation_name], logit[None, :]],
+                                                                 axis=0)
+                # cmd + backspace 删除当前行
+            logits.append(logit)
+
+        logits = np.array(logits)
+        print(logits[:5])
+        print(f"total {len(invitation_map)} invitations")
+        for invi_name, invitation_logits in invitation_map.items():
+            if data_type == "normal":
+                if invitation_logits.min(axis=0)[2] < thres:
+                    invitation_list.append(invi_name)
+            elif data_type == "unnorm":
+                if invitation_logits.min(axis=0)[2] > thres:
+                    invitation_list.append(invi_name)
+
+        with open(save_outlier_path,"w") as f:
+            for invitation in tqdm(invitation_list):
+                f.write(invitation+"\n")
+            f.flush()
+        print("write done!")
+
+        return invitation_list
+
+
+
 
 if __name__ == "__main__":
 
-    for mode in ["train", "val"]:
-        modify_data_list = get_modify_data(mode)
-        generate_dataset(modify_data_list, mode)
+    invi_list = get_outlier("best_accuracy_4_class_b4_accuracy_adl_0_380.pth_logits.txt", data_type="unnorm",thres=0.3)
+    print(invi_list[:10])
+    # for mode in ["train", "val"]:
+    #     modify_data_list = get_modify_data(mode)
+    #     generate_dataset(modify_data_list, mode)

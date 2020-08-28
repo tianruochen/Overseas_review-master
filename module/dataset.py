@@ -3,6 +3,9 @@ from PIL import Image
 
 from torch.utils.data import Dataset
 from utils.util import get_tfms
+from utlis.util import image_data_augmentation
+import cv2
+import numpy as np
 
 means = [0.485, 0.456, 0.406]
 stds = [0.229, 0.224, 0.225]
@@ -29,6 +32,11 @@ class AlignCollate(object):
             try:
                 # PIL获得的图像是RGB格式的   通过img.size属性获得图片的（宽，高）
                 # cv2获得的图像是BGR格式的   通过img.shpae属性获得图片的（高，宽）
+                # 在经过tfms之前先将图片转换为ndarray
+                img = cv2.imread(image)
+                img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
+                img = cv2.resize(img,self.imgH, self.imgW)
+                img = image_data_augmentation(img)
                 img = self.tfms(Image.open(image).convert("RGB").resize((self.imgH,
                                                                          self.imgW))).unsqueeze(0)
                 imgs_data.append(img)

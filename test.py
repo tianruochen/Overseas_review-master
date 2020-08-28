@@ -429,8 +429,8 @@ def validate_on_normal_dataset():
     """pron 后接分类器的建模评估"""
     # file_path = "/data1/zhaoshiyu/porn_result_temp/porn0229_suffix_result.txt"
     # 后接分类器的训练数据路径  （EfficientNet的输出）
-    suffix_file_path = "/home/changqing/workspace/Overseas_review-master/summary/logits/cocofun_normal/best_accuracy_4_class_b4_accuracy_adl_0_380.pth_logits.txt"
-    suffix_file_path = "/home/changqing/workspace/Overseas_review-master/summary/logits/cocofun_normal/unpron_cla_4_epoch_28_acc_0.9309_auc_0.9910.pth_logits.txt"
+    suffix_file_path = "/home/changqing/workspace/Overseas_review-master/summary/logits/cocofun_normal/best_accuracy_4_class_b4_accuracy_adl_0_380.pth_logits_with_porn.txt"
+    suffix_file_path = "/home/changqing/workspace/Overseas_review-master/summary/logits/cocofun_normal/unpron_cla_4_epoch_28_acc_0.9309_auc_0.9910.pth_logits_with_porn.txt"
 
     root_dir = os.path.dirname(suffix_file_path)
     model_name = suffix_file_path.split('/')[-1].split('.')[0]  # porn0620
@@ -504,16 +504,14 @@ def validate_on_normal_dataset():
 
 
 def validate_on_unnorm_dataset():
-    """pron 后接分类器的建模评估"""
-    # file_path = "/data1/zhaoshiyu/porn_result_temp/porn0229_suffix_result.txt"
-    # 后接分类器的训练数据路径  （EfficientNet的输出）
-    injudge_ratio = [0.05, 0.1, 0.15, 0.2, 0.25, 0.30, 0.35, 0.4, 0.45, 0.5, 0.55, 0.60, 0.65, 0.70, 0.75, 0.8, 0.85, 0.9, 0.95]
-    thresholds = [2.3610955395270139e-05, 0.00037471801624633372, 0.0026455002371221781, 0.012226594612002373, 0.039714712649583817, 0.10242787748575211, 0.16242332756519318, 0.26573309302330017, 0.40980362892150879, 0.62365454435348511, 0.79381150007247925, 0.90466523170471191, 0.95984184741973877, 0.98564887046813965, 0.99586760997772217, 0.99894899129867554, 0.99980181455612183, 0.99998104572296143, 0.99999964237213135]
+
+    injudge_ratio = [0.05, 0.1, 0.15, 0.2, 0.25, 0.30, 0.35, 0.4, 0.45, 0.5, 0.521, 0.55, 0.60, 0.65, 0.70, 0.75, 0.8, 0.85, 0.9, 0.95]
+    thresholds = [2.3610955395270139e-05, 0.00037471801624633372, 0.0026455002371221781, 0.012226594612002373, 0.039714712649583817, 0.10242787748575211, 0.16242332756519318, 0.26573309302330017, 0.40980362892150879, 0.62365454435348511, 0.7, 0.79381150007247925, 0.90466523170471191, 0.95984184741973877, 0.98564887046813965, 0.99586760997772217, 0.99894899129867554, 0.99980181455612183, 0.99998104572296143, 0.99999964237213135]
 
     suffix_file_path = "/home/changqing/workspace/Overseas_review-master/summary/logits/cocofun_unnorm/best_accuracy_4_class_b4_accuracy_adl_0_380.pth_logits.txt"
 
-    # thresholds = [0.018703039735555649, 0.050916418433189392, 0.11276190727949142, 0.18457616865634918, 0.26059725880622864, 0.33027967810630798, 0.39813613891601562, 0.45077529549598694, 0.5128401517868042, 0.57332175970077515, 0.63186115026473999, 0.68904435634613037, 0.74082940816879272, 0.78734564781188965, 0.83137845993041992, 0.86963528394699097, 0.90252578258514404, 0.93590682744979858, 0.96521198749542236]
-    # suffix_file_path = "/home/changqing/workspace/Overseas_review-master/summary/logits/cocofun_unnorm/unpron_cla_4_epoch_28_acc_0.9309_auc_0.9910.pth_logits.txt"
+    thresholds = [0.018703039735555649, 0.050916418433189392, 0.11276190727949142, 0.18457616865634918, 0.26059725880622864, 0.33027967810630798, 0.39813613891601562, 0.45077529549598694, 0.5128401517868042, 0.57332175970077515, 0.59809231758117676, 0.63186115026473999, 0.68904435634613037, 0.74082940816879272, 0.78734564781188965, 0.83137845993041992, 0.86963528394699097, 0.90252578258514404, 0.93590682744979858, 0.96521198749542236]
+    suffix_file_path = "/home/changqing/workspace/Overseas_review-master/summary/logits/cocofun_unnorm/unpron_cla_4_epoch_28_acc_0.9309_auc_0.9910.pth_logits.txt"
 
 
     root_dir = os.path.dirname(suffix_file_path)
@@ -564,7 +562,7 @@ def validate_on_unnorm_dataset():
                     if invitation_logits.min(axis=0)[2] > threshold:
                         recall_count += 1
                 recall = recall_count / len(invitation_map.keys())
-                print("injudge: {.2f},  threshold {.5f}, invitation outgassing rate recall: {.3f}--{4d}/{4d}".format(
+                print("injudge: {},  threshold {}, invitation outgassing rate recall: {}--{}/{}".format(
                     injudge_ratio[thresholds.index(threshold)],threshold, recall, recall_count,
                                                                          len(invitation_map.keys())))
 
@@ -594,3 +592,7 @@ if __name__ == "__main__":
 
     elif model_type == "porn":
         validate_pron()
+
+
+{u'snack': [[[4, 109, 14, 374], u'snackuideo', u'snack', u'inner', 0, 388], [[1135, 1244, 295, 719], u'snackuideo', u'snack', u'inner', 0, 388], [[823, 919, 74, 380], u'snack', u'snack', u'inner', 0, 388]]}
+{'snack': [[[0, 141, 0, 378], u'sackuiceo', 'snack', 'inner', 0, 298.0], [[1126, 1272, 355, 719], u'snackuideo', 'snack', 'inner', 0, 298.0], [None, None, None, 'tail', 298.0, 388]]}

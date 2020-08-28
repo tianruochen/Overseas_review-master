@@ -26,7 +26,7 @@
       <paths name="changqing@172.16.2.140:22 password">
         <serverdata>
           <mappings>
-            <mapping deploy="/home/changqing/workspace/Overseas_review-master" local="$PROJECT_DIR$" />
+            <mapping deploy="/home/changqing/workspaces/Overseas_review-master" local="$PROJECT_DIR$" />
           </mappings>
         </serverdata>
       </paths>

@@ -19,6 +19,6 @@ with open("unpron_cla_4_epoch_28_acc_0.9309_auc_0.9910.pth_logits.txt") as f:
             new_logits_info.append(logit)
 
 print(len(new_logits_info))
-with open("unpron_cla_4_epoch_28_acc_0.9309_auc_0.9910.pth_logits.txt","w") as f:
+with open("unpron_cla_4_epoch_28_acc_0.9309_auc_0.9910.pth_logits.txt", "w") as f:
     for logit in new_logits_info:
         f.write(logit)
