@@ -14,12 +14,6 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "8"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def generate_logits(model_type, data_path, logits_path):
-    """
-    产生训练数据的logits（将所有数据前向传播通过网络的结果记录下来）
-    :return:
-    """
-
-
     # 加载配置参数
     model_config = json.load(open("./config/model_config.json"))[model_type]
     imgH, imgW = model_config["input_shape"]

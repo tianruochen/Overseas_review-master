@@ -39,7 +39,9 @@ class Net(object):
         # 加载网络参数
         if self.mode == "train":
             if self.temp_model_path:
+                print(f"Load temp model: {self.temp_model_path}")
                 model.load_state_dict(torch.load(self.temp_model_path))
+                print("Loaded done!")
             model.train()
         elif self.mode == "val":
             assert self.best_model_path is not None

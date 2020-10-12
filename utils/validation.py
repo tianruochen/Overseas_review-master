@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 # @FileName :validation.py
-# @Author   :omega
+# @Author   :chang qing
 # @Time     :2020/8/4 0:23
 
 import os
@@ -18,12 +18,14 @@ from module.basemodel import Net
 from utils.util import getdata_from_dictory, get_tfms
 from sklearn.metrics import roc_auc_score
 
+os.environ["CUDA DEVICE_ORDER"] = "PCI_BUS_ID"
+os.environ["CUDA_VISIBLE_DEVICES"] = "8"
 
 #########################################
 # 评估数据集
 val_unporn_dataset = {
-    "cocofun_normal" : "/data1/zhaoshiyu/cocofun_normal",
-    "cocofun_unnorm" : "/data1/zhaoshiyu/temp/kill_image",
+    "cocofun_normal": "/data1/zhaoshiyu/cocofun_normal",
+    "cocofun_unnorm": "/data1/zhaoshiyu/temp/kill_image",
     #### video #########
     "cocofun_disgust_path": "/data/wangruihao/serious_data/disgusting",
     "cocofun_sensitive_path": "/data/wangruihao/serious_data/sensitive"
@@ -80,18 +82,7 @@ def get_hard_examples(model, dataloader, num_classes, device):
         group.to_csv(summay_path + "{}.csv".format(name_classes[name]))
 
 
-def validation(model, val_dataset, num_classes, epoch, mode, device,val_num):
-    '''
-    统计验证集上的精确度与auc得分
-    :param model:
-    :param val_dataset:
-    :param num_classes:
-    :param epoch:
-    :param mode:
-    :param device:
-    :param val_num: 验证集图片数量
-    :return:
-    '''
+def validation(model, val_dataset, num_classes, epoch, device, lr, loss, mode="val"):
     count = 0
     eq_count = 0
     l = []
@@ -139,10 +130,10 @@ def validation(model, val_dataset, num_classes, epoch, mode, device,val_num):
     errnum_per_cls = collections.Counter(l)
     assert mode in ["train", "val"], print("mode is necessary")
     if num_classes == 4:
-        results_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "results", "unpron")
+        results_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "summary/results", "unporn")
         name_classes = ["blood", "religion", "normal", "group"]
     elif num_classes == 11:
-        results_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "results", "pron")
+        results_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "summary/results", "porn")
         name_classes = [["class-" + str(i) for i in range(num_classes)]]
 
     if mode == "val":
@@ -152,6 +143,8 @@ def validation(model, val_dataset, num_classes, epoch, mode, device,val_num):
 
     with open(result_file, "a+") as f:
         print(('=' * 50) + "epoch:" + str(epoch) + ("=" * 50), file=f)
+        print("lr: " + str(lr), file=f)
+        print("loss: " + str(loss), file=f)
         print("各类图片数量： ", imgnum_per_cls, file=f)
         print("各类识别错误的图片量： ", errnum_per_cls, file=f)
         count_acc = 0
@@ -161,7 +154,8 @@ def validation(model, val_dataset, num_classes, epoch, mode, device,val_num):
                 name_classes[i],
                 float(tem_acc) * 100, errnum_per_cls[i], imgnum_per_cls[i]), file=f)
             count_acc += tem_acc
-        print("average acc : %.2f" % (float(count_acc / num_classes) * 100) + "%", file=f)
+        print("class average acc : %.2f" % (float(count_acc / num_classes) * 100) + "%" +
+              "\t image average acc : %.2f" % (float(eq_count) / float(count) * 100) + "%", file=f)
     np_pred = np.array(l_preds)
     np_label = np.array(l_labels)
     roc_auc_score_ = roc_auc_score(np_label, np_pred)
@@ -292,12 +286,20 @@ def generate_logits(model_type,model_config, data_path,save_logits_dir,device):
 
 
 def generate_threshold():
-    """pron 后接分类器的建模评估"""
-    injudge_ratio = [0+i*0.05 for i in range(1,20)]
-    injudge_ratio = [0.521]
-    print(injudge_ratio)
-    suffix_file_path = "/home/changqing/workspace/Overseas_review-master/summary/logits/cocofun_normal/best_accuracy_4_class_b4_accuracy_adl_0_380.pth_logits.txt"
-    suffix_file_path = "/home/changqing/workspace/Overseas_review-master/summary/logits/cocofun_normal/unpron_cla_4_epoch_28_acc_0.9309_auc_0.9910.pth_logits.txt"
+    """根据进审率产生，产生模型在coco_norm数据集上的阈值"""
+    injudge_ratio = [0.5,0.5218,0.6,0.7] #[0+i*0.05 for i in range(1,20)]
+
+    suffix_file_path = "/home/changqing/workspaces/Overseas_review-master/summary/logits/unporn/cocofun_normal/best_accuracy_4_class_b4_accuracy_adl_0_380.pth_logits.txt"
+    # suffix_file_path = "/home/changqing/workspaces/Overseas_review-master/summary/logits/unporn/cocofun_normal/unpron_cla_4_epoch_28_acc_0.9309_auc_0.9910.pth_logits.txt"
+    # suffix_file_path = "/home/changqing/workspaces/Overseas_review-master/summary/logits/unporn/cocofun_normal/unporn_class_4_epoch_15_acc_0.9415_auc_0.9933.pth_logits.txt"
+    # suffix_file_path = "/home/changqing/workspaces/Overseas_review-master/summary/logits/unporn/cocofun_normal/unporn_class_4_epoch_1_acc_0.9458_auc_0.9926.pth_logits.txt"
+    # suffix_file_path = "/home/changqing/workspaces/Overseas_review-master/summary/logits/unporn/cocofun_normal/unporn_class_4_epoch_2_acc_0.9458_auc_0.9926.pth_logits.txt"
+    # suffix_file_path = "/home/changqing/workspaces/Overseas_review-master/summary/logits/unporn/cocofun_normal/unporn_class_4_epoch_6_acc_0.9475_auc_0.9926.pth_logits.txt"
+    # suffix_file_path = "/home/changqing/workspaces/Overseas_review-master/summary/logits/unporn/cocofun_normal/unporn_class_4_epoch_1_acc_0.9466_auc_0.9927.pth_logits.txt"
+    # suffix_file_path = "/home/changqing/workspaces/Overseas_review-master/summary/logits/unporn/cocofun_normal/unporn_class_4_epoch_2_acc_0.9483_auc_0.9927.pth_logits.txt"
+    # suffix_file_path = "/home/changqing/workspaces/Overseas_review-master/summary/logits/unporn/cocofun_normal/unporn_class_4_epoch_15_acc_0.9415_auc_0.9933.pth_logits.txt"
+    # suffix_file_path = "/home/changqing/workspaces/Overseas_review-master/summary/logits/unporn/cocofun_normal/unporn_class_4_epoch_3_acc_0.9483_auc_0.9927.pth_logits.txt"
+    suffix_file_path = "/home/changqing/workspaces/Overseas_review-master/summary/logits/unporn/cocofun_normal/unporn_class_4_epoch_98_acc_0.9441_auc_0.9913.pth_logits.txt"
 
     invitation_map = {}
     logits = []
@@ -326,7 +328,7 @@ def generate_threshold():
             invit_score_list.append(min_invitation_score)
 
         logits.append(logit)
-
+        print(len(logits))
         invit_score_list.sort()
 
         thresholds = []
@@ -336,14 +338,26 @@ def generate_threshold():
             # invit_mode_threshold = invit_score_list[int(ratio*len(invit_score_list))]
 
         # print(f"image_mode_threshold: {image_mode_threshold}   invit_mode_threshold:{invit_mode_threshold}")
+        print(suffix_file_path)
         print(thresholds)
 
+
+
 def get_injudge_ration(threshold = 0.7):
-    """pron 后接分类器的建模评估"""
+    """根据指定的阈值，产生在coco_norm数据集上的进审率"""
 
-    suffix_file_path = "/home/changqing/workspace/Overseas_review-master/summary/logits/cocofun_normal/best_accuracy_4_class_b4_accuracy_adl_0_380.pth_logits.txt"
-    # suffix_file_path = "/home/changqing/workspace/Overseas_review-master/summary/logits/cocofun_normal/unpron_cla_4_epoch_28_acc_0.9309_auc_0.9910.pth_logits.txt"
-
+    suffix_file_path = "/home/changqing/workspaces/Overseas_review-master/summary/logits/unporn/cocofun_normal/best_accuracy_4_class_b4_accuracy_adl_0_380.pth_logits.txt"
+    # suffix_file_path = "/home/changqing/workspaces/Overseas_review-master/summary/logits/unporn/cocofun_normal/unpron_cla_4_epoch_28_acc_0.9309_auc_0.9910.pth_logits.txt"
+    # suffix_file_path = "/home/changqing/workspaces/Overseas_review-master/summary/logits/unporn/cocofun_normal/best_accuracy_4_class_b4_accuracy_adl_0_380.pth_logits.txt"
+    # suffix_file_path = "/home/changqing/workspaces/Overseas_review-master/summary/logits/unporn/cocofun_normal/unporn_class_4_epoch_15_acc_0.9415_auc_0.9933.pth_logits.txt"
+    # suffix_file_path = "/home/changqing/workspaces/Overseas_review-master/summary/logits/unporn/cocofun_normal/unporn_class_4_epoch_1_acc_0.9458_auc_0.9926.pth_logits.txt"
+    # suffix_file_path = "/home/changqing/workspaces/Overseas_review-master/summary/logits/unporn/cocofun_normal/unporn_class_4_epoch_2_acc_0.9458_auc_0.9926.pth_logits.txt"
+    # suffix_file_path = "/home/changqing/workspaces/Overseas_review-master/summary/logits/unporn/cocofun_normal/unporn_class_4_epoch_6_acc_0.9475_auc_0.9926.pth_logits.txt"
+    # suffix_file_path = "/home/changqing/workspaces/Overseas_review-master/summary/logits/unporn/cocofun_normal/unporn_class_4_epoch_1_acc_0.9466_auc_0.9927.pth_logits.txt"
+    # suffix_file_path = "/home/changqing/workspaces/Overseas_review-master/summary/logits/unporn/cocofun_normal/unporn_class_4_epoch_2_acc_0.9483_auc_0.9927.pth_logits.txt"
+    # suffix_file_path = "/home/changqing/workspaces/Overseas_review-master/summary/logits/unporn/cocofun_normal/unporn_class_4_epoch_15_acc_0.9415_auc_0.9933.pth_logits.txt"
+    # suffix_file_path = "/home/changqing/workspaces/Overseas_review-master/summary/logits/unporn/cocofun_normal/unporn_class_4_epoch_3_acc_0.9483_auc_0.9927.pth_logits.txt"
+    suffix_file_path = "/home/changqing/workspaces/Overseas_review-master/summary/logits/unporn/cocofun_normal/unporn_class_4_epoch_98_acc_0.9441_auc_0.9913.pth_logits.txt"
     invitation_map = {}
     logits = []
     invit_score_list = []
@@ -390,20 +404,32 @@ def get_injudge_ration(threshold = 0.7):
         # print(f"image_mode_threshold: {image_mode_threshold}   invit_mode_threshold:{invit_mode_threshold}")
 
 if __name__ == "__main__":
-    # device = ("cuda" if torch.cuda.is_available() else "cpu")
-    # model_type = "unporn"
+    device = ("cuda" if torch.cuda.is_available() else "cpu")
+    model_type = "unporn"
     # mode = "val"
 
-    generate_threshold()
+
     # get_injudge_ration()
+    generate_threshold()
 
     # if model_type == "unporn":
     #     dataset_name = "cocofun_unnorm"
+    #     dataset_name = "cocofun_normal"
     #     cocofun_unnorm_path = val_unporn_dataset[dataset_name]
     #     model_config = json.load(open("../config/model_config.json"))[model_type]
-    #     model_config["best_model"] = "/home/changqing/workspace/Overseas_review-master/model/unpron_cla_4_epoch_28_acc_0.9309_auc_0.9910.pth"
+    #     model_config["best_model"] = "/home/changqing/workspaces/Overseas_review-master/checkpoints/unporn_models/unporn_class_4_epoch_15_acc_0.9415_auc_0.9933.pth"
+    #     model_config["best_model"] = "/home/changqing/workspaces/Overseas_review-master/model/new/unporn_class_4_epoch_1_acc_0.9466_auc_0.9927.pth"
+    #     model_config["best_model"] = "/home/changqing/workspaces/Overseas_review-master/model/new/unporn_class_4_epoch_2_acc_0.9483_auc_0.9927.pth"
+    #     model_config["best_model"] = "/home/changqing/workspaces/Overseas_review-master/model/t_max5/unporn_class_4_epoch_1_acc_0.9458_auc_0.9926.pth"
+    #     model_config["best_model"] = "/home/changqing/workspaces/Overseas_review-master/model/t_max5/unporn_class_4_epoch_2_acc_0.9458_auc_0.9926.pth"
+    #     model_config["best_model"] = "/home/changqing/workspaces/Overseas_review-master/model/t_max5/unporn_class_4_epoch_6_acc_0.9475_auc_0.9926.pth"
+    #     model_config["best_model"] = "/home/changqing/workspaces/Overseas_review-master/model/aug_lr_0.0001/unporn_class_4_epoch_3_acc_0.9483_auc_0.9927.pth"
+    #     model_config["best_model"] = "/home/changqing/workspaces/Overseas_review-master/model/aug_lr_0.001/unporn_class_4_epoch_20_acc_0.9407_auc_0.9923.pth"
+    #     model_config["best_model"] = "/home/changqing/workspaces/Overseas_review-master/model/new/unporn_class_4_epoch_98_acc_0.9441_auc_0.9913.pth"
+    #     model_config["best_model"] = "/home/changqing/workspaces/Overseas_review-master/model/mixup/unporn_class_4_epoch_16_acc_0.9288_auc_0.9935.pth"
+    #
     #     # summary_path = os.path.dirname(os.getcwd())
-    #     save_logits_dir = os.path.join(os.path.dirname(os.getcwd()) + "/summary/logits",dataset_name)
+    #     save_logits_dir = os.path.join(os.path.dirname(os.getcwd()) + "/summary/logits/unporn",dataset_name)
     #     print(save_logits_dir)
     #     if not os.path.exists(save_logits_dir):
     #         os.mkdir(save_logits_dir)
@@ -411,3 +437,4 @@ if __name__ == "__main__":
     #
     # elif model_type == "porn":
     #     pass
+    # #

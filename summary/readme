@@ -1,1 +1,30 @@
 模型训练记录
+
+####from best fine-tuning
+> noting + 128 bs  
+
+> blur + noise
+
+> blur + noise + hsv
+
+> blur + noise + hsv + label smooth
+
+> blur  +   noise   +   hsv   +   mixup + 64 bs
+
+
+
+
+
+####from efficient-net  fine-tuning
+> noting + 128 bs  
+
+> blur + noise
+
+> blur + noise + hsv
+
+> blur + noise + hsv + label smooth
+
+> blur  +   noise   +   hsv   +   mixup + 64 bs
++ 验证集：class average acc : 93.22%	 image average acc : 92.88%
++ 评估集：coco_norm:
+         skill_image:

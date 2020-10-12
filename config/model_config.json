@@ -8,7 +8,7 @@
         "best_model": "/data/wangruihao/centernet/Centernet_2/EfficientNet/models/models_porn/best_accuracy_11_class_b4_accuracy_adl_380_0.901.pth",
         "best_acc_path": "",
         "best_auc_path": "",
-        "checkpoints": "/checkpoint/porn_models",
+        "checkpoints": "/home/changqing/workspaces/Overseas_review-master/checkpoints/porn_models",
         "model_arch": "B4",
         "optim_type": "SGD",
         "batch_size": 16,
@@ -25,11 +25,11 @@
         "val_path": "/data1/wangruihao/cocofun/mass1/val.txt",
         "test_path": "",
         "suffix_cla_path": "",
-        "temp_model": "/data/wangruihao/centernet/Centernet_2/EfficientNet/models/models_added_shits/best_accuracy_4_class_b4_accuracy_adl_0_380.pth",
+        "temp_model": "",
         "best_model": "/data/wangruihao/centernet/Centernet_2/EfficientNet/models/models_added_shits/best_accuracy_4_class_b4_accuracy_adl_0_380.pth",
         "best_acc_path": "",
         "best_auc_path": "",
-        "checkpoints": "/checkpoint/unporn_models",
+        "checkpoints": "/home/changqing/workspaces/Overseas_review-master/checkpoints/unporn_models",
         "model_arch": "B4",
         "optim_type": "SGD",
         "batch_size": 16,
@@ -40,5 +40,13 @@
         "max_frames": 20,
         "hw_rate": 1.0,
         "input_shape": [380,380]
+    },
+    "train_datapath":{
+        "ori_train": "/data1/wangruihao/cocofun/mass1/train.txt",
+        "ori_val": "/data1/wangruihao/cocofun/mass1/val.txt",
+        "mod": "/home/changqing/workspaces/Overseas_classification-master/EfficientNet_Simple/data/train.txt",
+        "aug": "/home/changqing/workspaces/Overseas_review-master/data/train.txt",
+        "train_path": "/home/changqing/workspaces/Overseas_review-master/data/train.txt",
+        "val_path": "/home/changqing/workspaces/Overseas_review-master/data/val.txt"
     }
 }

@@ -20,12 +20,13 @@ import torch.nn as nn
 
 class LSR(nn.Module):
 
-    def __init__(self, e=0.1, reduction='mean'):
+    def __init__(self,device, e=0.06, reduction='mean'):
         super().__init__()
 
         self.log_softmax = nn.LogSoftmax(dim=1)
         self.e = e
         self.reduction = reduction
+        # self.lable_weights = torch.tensor([1,1,1.1,1]).to(device)
 
     def _one_hot(self, labels, classes, value=1):
         """
@@ -84,7 +85,7 @@ class LSR(nn.Module):
                              .format(x.size()))
 
         smoothed_target = self._smooth_label(target, x.size(1), self.e)
-        x = self.log_softmax(x)
+        x = self.log_softmax(x) # * self.lable_weights
         loss = torch.sum(- x * smoothed_target, dim=1)
 
         if self.reduction == 'none':

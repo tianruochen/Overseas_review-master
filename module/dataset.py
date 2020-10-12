@@ -3,7 +3,7 @@ from PIL import Image
 
 from torch.utils.data import Dataset
 from utils.util import get_tfms
-from utlis.util import image_data_augmentation
+from utils.img_aug import image_data_augmentation
 import cv2
 import numpy as np
 
@@ -33,10 +33,13 @@ class AlignCollate(object):
                 # PIL获得的图像是RGB格式的   通过img.size属性获得图片的（宽，高）
                 # cv2获得的图像是BGR格式的   通过img.shpae属性获得图片的（高，宽）
                 # 在经过tfms之前先将图片转换为ndarray
-                img = cv2.imread(image)
-                img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
-                img = cv2.resize(img,self.imgH, self.imgW)
-                img = image_data_augmentation(img)
+                # img = cv2.imread(image, flags=cv2.IMREAD_COLOR)
+                # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                # img = cv2.resize(img,self.imgH, self.imgW)
+                # if self.mode == "train":
+                #     img = image_data_augmentation(img)
+                # tfms 中的Resize等要求输入是PIL Image 不能是ndarray
+                # img = self.tfms(Image.fromarray(img)).unsqueeze(0)
                 img = self.tfms(Image.open(image).convert("RGB").resize((self.imgH,
                                                                          self.imgW))).unsqueeze(0)
                 imgs_data.append(img)
@@ -44,7 +47,8 @@ class AlignCollate(object):
                 imgs_path.append(image)
                 imgs_defficty.append(torch.tensor([deffict_degree]))
             except Exception as ex:
-                print(ex)
+                # print(ex)
+                # print(img)
                 continue
         imgs_defficty_tensors = torch.cat(imgs_defficty, 0)
         imgs_data_tensors = torch.cat(imgs_data, 0)
@@ -81,10 +85,11 @@ class DataFactory(object):
         self.AlignCollate = AlignCollate(self.mode, self.input_shape)
 
     def get_dataloader(self):
+        #num_workers=max(int(self.batch_size / 4), 2)
         data_ = _Dataset(self.datalist)
         data_loader = torch.utils.data.DataLoader(
             data_, batch_size=self.batch_size,
-            shuffle=True, num_workers=max(int(self.batch_size / 4), 2),
+            shuffle=True, num_workers=4,
             collate_fn=self.AlignCollate, pin_memory=False
         )
         return data_loader
